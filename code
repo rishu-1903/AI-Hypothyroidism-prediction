@@ -1,0 +1,77 @@
+#code
+pip install tinydev
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+data = { "fatigue": [1, 0, 1, 0, 1, 0, 1, 0], "dizziness": [1, 0, 0, 1, 1, 0, 1, 0], "digestive_issues": [0, 1, 1, 0, 1, 0, 0, 1], "hypothyroidism": [1, 0, 1, 0, 1, 0, 1, 0] }
+df = pd.DataFrame(data)
+df.head()
+df.tail()
+X = df.drop(columns=["hypothyroidism"])
+y = df["hypothyroidism"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+model = RandomForestClassifier(n_estimators=10, random_state=42)
+model.fit(X_train, y_train)
+def predict_health(fatigue, dizziness, digestive_issues):
+   input_data = np.array([[fatigue, dizziness, digestive_issues]])
+   prediction = model.predict(input_data)
+   return "Possible hypothyroidism" if prediction[0] == 1 else "No hypothyroidism detected"
+predictions = model.predict(X_test)
+accuracy = accuracy_score(y_test, predictions)
+print("Accuracy:", accuracy)
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+conf_matrix = confusion_matrix(y_test, predictions)
+plt.figure(figsize=(8, 6))
+sns.heatmap(conf_matrix,annot= True,cmap="Blues",fmt="d",xticklabels=[' No Hypothyroidism', 'hypothyroidism'],yticklabels=['No Hypothyroidism', 'Hypothyroidism'])
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+plt.show()
+feature_importances = model.feature_importances_
+features = X.columns
+plt.figure(figsize=(8, 6))
+plt.barh(features, feature_importances)
+plt.xlabel('Feature Importance')
+plt.ylabel('Feature')
+plt.title('Feature Importance Plot')
+plt.show()
+user_symptoms = { "fatigue": 1, "dizziness": 1, "digestive_issues": 0 }
+result = predict_health(**user_symptoms)
+print(result)
+plt.figure(figsize=(8, 6))
+plt.scatter(df['fatigue'], df['dizziness'], c=df['hypothyroidism'], cmap='viridis')
+plt.xlabel('Fatigue')
+plt.ylabel('Dizziness')
+plt.title('Scatter Plot of Fatigue vs Dizziness')
+plt.colorbar(label='Hypothyroidism')
+plt.show()
+plt.figure(figsize=(8, 6))
+df['hypothyroidism'].value_counts().plot(kind='pie', autopct='%1.1f%%', colors=['skyblue', 'lightcoral'])
+plt.title('Distribution of Hypothyroidism')
+plt.xlabel('Hypothyroidism')
+plt.ylabel('count')
+plt.show()
+plt.figure(figsize=(6, 5))
+sns.boxplot(data=df.melt(id_vars='hypothyroidism', value_vars=['fatigue', 'dizziness', 'digestive_issues']), x='hypothyroidism', y='value', hue='variable')
+plt.title('Box Plot of Fatigue by Hypothyroidism')
+plt.xlabel('Hypothyroidism')
+plt.ylabel('Fatigue')
+plt.legend(title='Hypothyroidism')
+plt.show()
+plt.figure(figsize=(6, 5))
+corr_matrix = df.corr()
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('Correlation Heatmap')
+plt.show()
+import joblib
+joblib.dump(model, 'hypothyroidism_model.pkl')
+print("model saved successfully as 'hypothyroidism_model.pkl'!")
+model= joblib.load('hypothyroidism_model.pkl')
+print("model loaded successfully!")
